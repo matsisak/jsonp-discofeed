@@ -19,6 +19,10 @@
                     <p>This discovery feed service allows retrieval of discovery data and setting of a cookie, which stores the selected IdP.
                         This is done using jsonp, allowing this feed to be located on another domain than the domain of the web page
                         accessing this information</p>
+                    
+                    <p>Pure discoverydata feed (no information about last IdP) is accessible through:</p> 
+                    <a href="discoFeed?callback=callbackid"
+                       >/discoFeed?callback=callbackid</a>
                     <p>Access the feed through:</p> 
                     <a href="feed?action=discoFeed&callback=callbackid"
                        >/feed?action=discoFeed&callback=callbackid</a>
