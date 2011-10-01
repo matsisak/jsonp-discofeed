@@ -26,6 +26,11 @@
             <param-value>60</param-value>
         </init-param>
     </servlet>
+    <servlet>
+        <description>Set and read entityID values in cookies under the domain of the feed</description>
+        <servlet-name>CookieHandler</servlet-name>
+        <servlet-class>com.aaasec.jpdf.jsonpdiscofeed.CookieHandler</servlet-class>
+    </servlet>
     <servlet-mapping>
         <servlet-name>Eid2DiscoFeed</servlet-name>
         <url-pattern>/feed</url-pattern>
@@ -33,6 +38,10 @@
     <servlet-mapping>
         <servlet-name>JsonpDiscoFeed</servlet-name>
         <url-pattern>/discoFeed</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>CookieHandler</servlet-name>
+        <url-pattern>/cookie</url-pattern>
     </servlet-mapping>
     <session-config>
         <session-timeout>2</session-timeout>

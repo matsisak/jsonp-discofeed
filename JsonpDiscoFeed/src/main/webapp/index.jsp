@@ -19,10 +19,33 @@
                     <p>This discovery feed service allows retrieval of discovery data and setting of a cookie, which stores the selected IdP.
                         This is done using jsonp, allowing this feed to be located on another domain than the domain of the web page
                         accessing this information</p>
-                    
-                    <p>Pure discoverydata feed (no information about last IdP) is accessible through:</p> 
+
+                    <p>This discovery is provided in 2 versions. A new version (V2) under development and the legacy version (V1) used in some test implementations</p>
+
+                    <h2>Test URL queries using the V2 Feed </h2>
+
+                    <p>Obtain pure discoverydata feed (no information about last IdP) constructed from the federation metadata:</p> 
                     <a href="discoFeed?callback=callbackid"
                        >/discoFeed?callback=callbackid</a>
+
+                    <p>Obtain informatioin about previously selected IdPs based on current cookie settings with the domain of this feed:</p> 
+                    <a href="cookie?callback=callbackid"
+                       >/cookie?callback=callbackid</a>
+
+                    <p>Set a cookie that lasts for 100 days which remembers one last IdP choice as the SUNET reference IdP through:</p>
+                    <a href="cookie?last=https://idp.test.eid2.se/idp/shibboleth&maxAge=100&callback=callbackid"
+                       >/cookie?last=https://idp.test.eid2.se/idp/shibboleth&maxAge=100&callback=callbackid</a><br/><br/>
+
+                    <p>Set a cookie that lasts for 50 days which remembers three previous IdP choices through:</p>
+                    <a href="cookie?p0=https://idp.test.eid2.se/idp/shibboleth&p1=https://idp-test.nordu.net/idp/shibboleth&p2=https://idp.kirei.se/saml2/idp/metadata.php&maxAge=50&callback=callbackid"
+                       >/cookie?p0=https://idp.test.eid2.se/idp/shibboleth<br/>&p1=https://idp-test.nordu.net/idp/shibboleth<br/>&p2=https://idp.kirei.se/saml2/idp/metadata.php<br/>&maxAge=100&callback=callbackid</a><br/><br/>
+
+                                           <p>Set a cookie that lasts for 50 days which remembers three previous IdP choices through:</p>
+                    <a href="cookie?last=https://idp.test.eid2.se/idp/shibboleth&p0=https://idp-test.nordu.net/idp/shibboleth&p1=https://idp.kirei.se/saml2/idp/metadata.php&maxAge=75&callback=callbackid"
+                       >/cookie?last=https://idp.test.eid2.se/idp/shibboleth<br/>&p0=https://idp-test.nordu.net/idp/shibboleth<br/>&p1=https://idp.kirei.se/saml2/idp/metadata.php<br/>&maxAge=100&callback=callbackid</a><br/><br/>
+
+
+                    <h2>Test URL queries using the V1 Feed </h2>
                     <p>Access the feed through:</p> 
                     <a href="feed?action=discoFeed&callback=callbackid"
                        >/feed?action=discoFeed&callback=callbackid</a>
@@ -35,15 +58,15 @@
                        >/feed?action=setCookie&entityID=https://idp.test.eid2.se/idp/shibboleth&maxAge=100&callback=callbackid</a><br/><br/>
                     <p><b style="color: #330000">jquery JavaScript code for accessing json data from this feed:</b></p>
                     <xmp>   $.getJSON(urlToThisFeed+'/feed?action=discoFeed&callback=?', function(json) {
-       var IdpEntityIDfromCookie = json.last[0].entityID;
-       var firstListedIdpEntityID = json.discoFeed[0].entityID;
-       var firstListedIdpDisplayName = json.discoFeed[0].DisplayNames[0].value;
-   });
+                        var IdpEntityIDfromCookie = json.last[0].entityID;
+                        var firstListedIdpEntityID = json.discoFeed[0].entityID;
+                        var firstListedIdpDisplayName = json.discoFeed[0].DisplayNames[0].value;
+                        });
                     </xmp>
                     <p><b style="color: #330000">jquery JavaScript for settting a 100 day cookie remembering a selected IdP sessionID</b></p>
                     <xmp>   $.getJSON(urlToThisFeed+'/feed?action=setCookie&entityID='
-       +entityID+'&maxAge=100&callback=?', function(data) {
-   });
+                        +entityID+'&maxAge=100&callback=?', function(data) {
+                        });
                     </xmp>
                     <p><a href="doc/Common_discovery_datafeed.htm">Technical documentation</a></p>
                     <br/></br>
