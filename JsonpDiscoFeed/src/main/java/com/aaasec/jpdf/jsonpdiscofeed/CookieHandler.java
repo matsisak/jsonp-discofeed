@@ -180,8 +180,9 @@ public class CookieHandler extends HttpServlet {
             }
             if (!empty) {
                 b.deleteCharAt(b.lastIndexOf(","));
+                b.append(LF).append("  ");
             }
-            b.append(LF).append("  ]").append(LF);
+            b.append("]").append(LF);
         }
         b.append(" }").append(LF);
         return b.toString();
