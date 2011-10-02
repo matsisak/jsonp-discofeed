@@ -32,17 +32,17 @@
                     <a href="cookie?callback=callbackid"
                        >/cookie?callback=callbackid</a>
 
-                    <p>Set a cookie that lasts for 100 days which remembers one last IdP choice as the SUNET reference IdP through:</p>
+                    <p>Set a cookie (lastIdp) that lasts for 100 days which remembers one last IdP choice as the SUNET reference IdP through:</p>
                     <a href="cookie?last=https://idp.test.eid2.se/idp/shibboleth&maxAge=100&callback=callbackid"
                        >/cookie?last=https://idp.test.eid2.se/idp/shibboleth&maxAge=100&callback=callbackid</a><br/><br/>
 
-                    <p>Set a cookie that lasts for 50 days which remembers three previous IdP choices through:</p>
+                    <p>Set a cookie (previousIdps) that lasts for 50 days which remembers three previous IdP choices through:</p>
                     <a href="cookie?p0=https://idp.test.eid2.se/idp/shibboleth&p1=https://idp-test.nordu.net/idp/shibboleth&p2=https://idp.kirei.se/saml2/idp/metadata.php&maxAge=50&callback=callbackid"
                        >/cookie?p0=https://idp.test.eid2.se/idp/shibboleth<br/>&p1=https://idp-test.nordu.net/idp/shibboleth<br/>&p2=https://idp.kirei.se/saml2/idp/metadata.php<br/>&maxAge=100&callback=callbackid</a><br/><br/>
 
-                                           <p>Set a cookie that lasts for 50 days which remembers three previous IdP choices through:</p>
+                    <p>Set a cookie (lastIdp) which remembers the last IdP choice and another cookie (previousIdPs) remembering two previous IdP choices, both having a maxAge of 75 days, through:</p>
                     <a href="cookie?last=https://idp.test.eid2.se/idp/shibboleth&p0=https://idp-test.nordu.net/idp/shibboleth&p1=https://idp.kirei.se/saml2/idp/metadata.php&maxAge=75&callback=callbackid"
-                       >/cookie?last=https://idp.test.eid2.se/idp/shibboleth<br/>&p0=https://idp-test.nordu.net/idp/shibboleth<br/>&p1=https://idp.kirei.se/saml2/idp/metadata.php<br/>&maxAge=100&callback=callbackid</a><br/><br/>
+                       >/cookie?last=https://idp.test.eid2.se/idp/shibboleth<br/>&p0=https://idp-test.nordu.net/idp/shibboleth<br/>&p1=https://idp.kirei.se/saml2/idp/metadata.php<br/>&maxAge=75&callback=callbackid</a><br/><br/>
 
 
                     <h2>Test URL queries using the V1 Feed </h2>
