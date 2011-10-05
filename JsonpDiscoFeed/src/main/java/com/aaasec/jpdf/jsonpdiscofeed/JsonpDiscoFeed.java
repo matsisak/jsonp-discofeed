@@ -11,6 +11,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.json.JSONArray;
+import org.json.JSONException;
 
 /** 
  *
@@ -23,7 +25,7 @@ public class JsonpDiscoFeed extends HttpServlet {
     private static final String LF = System.getProperty("line.separator");
     private String metaCacheFileName;
     private MetaData metaData;
-    private String jsonData;
+    private JSONArray jsonData;
     private String cacheDealyMinutes;
     private long lastCache;
 
@@ -55,12 +57,17 @@ public class JsonpDiscoFeed extends HttpServlet {
         }
 
         response.setContentType("application/javascript");
-        String json = getMetadataJson();
+        JSONArray json = getMetadataJson();
         String sourceUrl = request.getParameter("source");
         if (sourceUrl != null) {
             json = getDiscoFeed(sourceUrl);
         }
-        String jsonp = callback + "(" + json + ")";
+        String jsonStr="[]";
+        try {
+            jsonStr = json.toString(2);
+        } catch (JSONException ex) {
+        }
+        String jsonp = callback + "(" + jsonStr + ")";
         response.getWriter().write(jsonp);
 
     }
@@ -101,14 +108,15 @@ public class JsonpDiscoFeed extends HttpServlet {
         return "Short description";
     }// </editor-fold>
 
-    private String getDiscoFeed(String sourceUrl) {
+    private JSONArray getDiscoFeed(String sourceUrl) {
         URL url;
-        String json = "[]";
+        JSONArray json = new JSONArray();
         try {
             url = new URL(sourceUrl);
             byte[] jsonBytes = Utils.getUrlBytes(url);
             if (jsonBytes != null) {
-                json = new String(jsonBytes, Charset.forName("UTF-8"));
+                String jsonstr = new String(jsonBytes, Charset.forName("UTF-8"));
+                json = new JSONArray(jsonstr);
             }
         } catch (Exception ex) {
         }
@@ -116,7 +124,7 @@ public class JsonpDiscoFeed extends HttpServlet {
     }
 
 
-    private String getMetadataJson() {
+    private JSONArray getMetadataJson() {
         Long currentTime = System.currentTimeMillis();
         long delay;
         try {

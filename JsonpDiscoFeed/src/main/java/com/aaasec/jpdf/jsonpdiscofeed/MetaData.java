@@ -1,7 +1,5 @@
 package com.aaasec.jpdf.jsonpdiscofeed;
 
-
-
 /*
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
@@ -18,6 +16,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -32,7 +33,7 @@ public final class MetaData {
     private List<String> entityIds;
     private Map<String, Map> idpMap;
     private boolean initialized = false;
-    private String discoJson;
+    private JSONArray discoJson;
     private static final String LF = System.getProperty("line.separator");
 
     /**
@@ -115,44 +116,87 @@ public final class MetaData {
         }
     }
 
-    private String buildJson() {
-        StringBuilder b = new StringBuilder();
+    private JSONArray buildJson() {
+        JSONArray json = new JSONArray();
         if (!initialized || entityIds.isEmpty()) {
-            b.append("[]");
-            return b.toString();
+            return json;
         }
-        b.append("[").append(LF);
-
         int i = 0, size = entityIds.size();
         for (String entityID : entityIds) {
-            b.append("{\"entityID\": \"");
-            b.append(entityID).append("\",").append(LF);
-            b.append(" \"DisplayNames\": [").append(LF);
-            if (idpMap.containsKey(entityID)) {
-                Map<String, String> dispNames = idpMap.get(entityID);
-                List<String> orderedLang = getOrderedLangList(dispNames);
-                int orgIdx = 0, orgSize = orderedLang.size();
-                for (String lang : orderedLang) {
-                    b.append("  {\"value\": \"");
-                    b.append(dispNames.get(lang)).append("\",").append(LF);
-                    b.append("   \"lang\": \"");
-                    b.append(lang).append("\"}");
-                    if (++orgIdx < orgSize) {
-                        b.append(",");
+            try {
+                JSONObject entityObj = new JSONObject();
+                JSONArray dispArr = new JSONArray();
+                entityObj.accumulate("entityID", entityID);
+                if (idpMap.containsKey(entityID)) {
+                    Map<String, String> dispNames = idpMap.get(entityID);
+                    List<String> orderedLang = getOrderedLangList(dispNames);
+                    int orgIdx = 0, orgSize = orderedLang.size();
+                    if (orderedLang.isEmpty()) {
+                        String name;
+                        try {
+                            name = entityID.substring(0, entityID.indexOf("/", 9));
+                        } catch (Exception ex) {
+                            name = entityID;
+                        }
+                        JSONObject dispObj = new JSONObject();
+                        dispObj.accumulate("value", name);
+                        dispObj.accumulate("lang", "en");
+                        dispArr.put(dispObj);
+                    } else {
+                        for (String lang : orderedLang) {
+                            JSONObject dispObj = new JSONObject();
+                            dispObj.accumulate("value", dispNames.get(lang));
+                            dispObj.accumulate("lang", lang);
+                            dispArr.put(dispObj);
+                        }
                     }
-                    b.append(LF);
                 }
-                b.append(" ]}");
-                if (++i < size) {
-                    b.append(",");
-                }
-                b.append(LF);
+                json.put(entityObj);
+                entityObj.put("DisplayNames", dispArr);
+            } catch (JSONException ex) {
+                Logger.getLogger(MetaData.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
-        b.append("]");
-        return b.toString();
+        return json;
     }
 
+//    private String buildJsonOld() {
+//        StringBuilder b = new StringBuilder();
+//        if (!initialized || entityIds.isEmpty()) {
+//            b.append("[]");
+//            return b.toString();
+//        }
+//        b.append("[").append(LF);
+//
+//        int i = 0, size = entityIds.size();
+//        for (String entityID : entityIds) {
+//            b.append("{\"entityID\": \"");
+//            b.append(entityID).append("\",").append(LF);
+//            b.append(" \"DisplayNames\": [").append(LF);
+//            if (idpMap.containsKey(entityID)) {
+//                Map<String, String> dispNames = idpMap.get(entityID);
+//                List<String> orderedLang = getOrderedLangList(dispNames);
+//                int orgIdx = 0, orgSize = orderedLang.size();
+//                for (String lang : orderedLang) {
+//                    b.append("  {\"value\": \"");
+//                    b.append(dispNames.get(lang)).append("\",").append(LF);
+//                    b.append("   \"lang\": \"");
+//                    b.append(lang).append("\"}");
+//                    if (++orgIdx < orgSize) {
+//                        b.append(",");
+//                    }
+//                    b.append(LF);
+//                }
+//                b.append(" ]}");
+//                if (++i < size) {
+//                    b.append(",");
+//                }
+//                b.append(LF);
+//            }
+//        }
+//        b.append("]");
+//        return b.toString();
+//    }
     private List<String> getOrderedLangList(Map<String, String> dispNames) {
         List<String> langList = new ArrayList<String>();
         Set<String> keySet = dispNames.keySet();
@@ -202,7 +246,7 @@ public final class MetaData {
      * Provides discovery data output.
      * @return The discovery data in json format
      */
-    public String getDiscoJson() {
+    public JSONArray getDiscoJson() {
         return discoJson;
     }
 }

@@ -1,10 +1,10 @@
 package com.aaasec.jpdf.jsonpdiscofeed;
 
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
@@ -13,6 +13,9 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /** 
  *
@@ -25,7 +28,7 @@ public class Eid2DiscoFeed extends HttpServlet {
     private static final String LF = System.getProperty("line.separator");
     private String metaCacheFileName;
     private MetaData metaData;
-    private String jsonData;
+    private JSONArray jsonData;
     private String cacheDealyMinutes;
     private long lastCache;
 
@@ -50,8 +53,9 @@ public class Eid2DiscoFeed extends HttpServlet {
             throws ServletException, IOException {
 
         String action = request.getParameter("action");
+        String callback = request.getParameter("callback");
 
-        if (action == null) {
+        if (action == null || callback == null) {
             response.setStatus(HttpServletResponse.SC_NO_CONTENT);
             response.getWriter().write("");
             return;
@@ -59,20 +63,25 @@ public class Eid2DiscoFeed extends HttpServlet {
 
         if (action.equals("discoFeed")) {
             response.setContentType("application/javascript");
-            String json = getMetadataJson();
+            JSONArray json;
+            json = getMetadataJson();
             String sourceUrl = request.getParameter("source");
             if (sourceUrl != null) {
                 json = getDiscoFeed(sourceUrl);
             }
-            String callback = request.getParameter("callback");
-            String jsonp = callback + "(" + getExtendedFeed(json, request) + ")";
+            String jsonStr = "";
+            try {
+                jsonStr = getExtendedFeed(json, request).toString(2);
+            } catch (JSONException ex) {
+                LOG.log(Level.INFO, null, ex);
+            }
+            String jsonp = callback + "(" + jsonStr + ")";
             response.getWriter().write(jsonp);
         }
 
         if (action.equals("setCookie")) {
             response.setContentType("application/javascript");
             String value = request.getParameter("entityID");
-            String callback = request.getParameter("callback");
             String maxAgeStr = request.getParameter("maxAge");
             int maxAge;
             try {
@@ -125,22 +134,23 @@ public class Eid2DiscoFeed extends HttpServlet {
         return "Short description";
     }// </editor-fold>
 
-    private String getDiscoFeed(String sourceUrl) {
+    private JSONArray getDiscoFeed(String sourceUrl) {
         URL url;
-        String json = "[]";
+        JSONArray json = new JSONArray();
         try {
             url = new URL(sourceUrl);
             byte[] jsonBytes = Utils.getUrlBytes(url);
             if (jsonBytes != null) {
-                json = new String(jsonBytes, Charset.forName("UTF-8"));
+                String jsonstr = new String(jsonBytes, Charset.forName("UTF-8"));
+                json = new JSONArray(jsonstr);
             }
         } catch (Exception ex) {
         }
         return json;
     }
 
-    private String getExtendedFeed(String discoFeed, HttpServletRequest request) {
-        StringBuilder b = new StringBuilder();
+    private JSONObject getExtendedFeed(JSONArray discoFeed, HttpServletRequest request) {
+        JSONObject json = new JSONObject();
         String lastIdp = "";
         Cookie[] cookies = request.getCookies();
         if (cookies != null) {
@@ -151,16 +161,26 @@ public class Eid2DiscoFeed extends HttpServlet {
                 }
             }
         }
-        b.append("{").append(LF);
-        b.append(" \"last\": ");
-        b.append("[{\"entityID\": \"").append(lastIdp).append("\"}],").append(LF);
-        b.append(" \"discoFeed\": ").append(LF);
-        b.append(discoFeed).append(LF);
-        b.append("}").append(LF);
-        return b.toString();
+        try {
+            JSONArray lia = new JSONArray();
+            lia.put((new JSONObject()).accumulate("entityID", lastIdp));
+            json.put("last", lia);
+        } catch (JSONException ex) {
+            LOG.log(Level.INFO, null, ex);
+        }
+        try {
+            json.put("discoFeed", discoFeed);
+//            for (int i=0;i<discoFeed.length();i++){
+//                json.accumulate("discoFeed", discoFeed.get(i));
+//            }
+//            json.append("discoFeed", discoFeed.getJSONArray("idpList"));
+        } catch (JSONException ex) {
+            LOG.log(Level.INFO, null, ex);
+        }
+        return json;
     }
 
-    private String getMetadataJson() {
+    private JSONArray getMetadataJson() {
         Long currentTime = System.currentTimeMillis();
         long delay;
         try {
@@ -168,12 +188,12 @@ public class Eid2DiscoFeed extends HttpServlet {
         } catch (Exception ex) {
             delay = 10;
         }
-        delay = delay*1000*60;
-        
-        if (currentTime>lastCache+delay){
+        delay = delay * 1000 * 60;
+
+        if (currentTime > lastCache + delay) {
             // recache
             metaData = new MetaData(new File(metaCacheFileName));
-        }        
+        }
         return metaData.getDiscoJson();
     }
 }

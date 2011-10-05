@@ -20,6 +20,8 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /** 
  *
@@ -48,7 +50,7 @@ public class CookieHandler extends HttpServlet {
 
         String callback = request.getParameter("callback");
         List<String> entityIDs = new ArrayList<String>();
-        for (int i = 0; i < 10; i++) {            
+        for (int i = 0; i < 10; i++) {
             String val = request.getParameter(getId(i));
             if (val != null) {
                 entityIDs.add(val);
@@ -66,7 +68,13 @@ public class CookieHandler extends HttpServlet {
         // If no entity ID parameters - return current cookie values
         response.setContentType("application/javascript");
         if (entityIDs.isEmpty() && last == null) {
-            String cookieResponse = getResponseFromCookie(request);
+            String cookieResponse;
+            try {
+                cookieResponse = getResponseFromCookie(request).toString(2);
+            } catch (JSONException ex) {
+                LOG.log(Level.INFO, null, ex);
+                cookieResponse = "";
+            }
             String jsonp = callback + "(" + cookieResponse + ")";
             response.getWriter().write(jsonp);
             return;
@@ -78,7 +86,13 @@ public class CookieHandler extends HttpServlet {
         } catch (Exception ex) {
             maxAge = -1;
         }
-        String cookieResponse = getCookieSettingResponse(response, last, entityIDs, maxAge);
+        String cookieResponse;
+        try {
+            cookieResponse = getCookieSettingResponse(response, last, entityIDs, maxAge).toString(2);
+        } catch (JSONException ex) {
+            LOG.log(Level.INFO, null, ex);
+            cookieResponse = "";
+        }
         String jsonp = callback + "(" + cookieResponse + ")";
         response.getWriter().write(jsonp);
     }
@@ -133,7 +147,7 @@ public class CookieHandler extends HttpServlet {
         return json;
     }
 
-    private String getResponseFromCookie(HttpServletRequest request) {
+    private JSONObject getResponseFromCookie(HttpServletRequest request) {
         Map<String, String> previousIdps = new HashMap<String, String>();
         String last = "";
         Cookie[] cookies = request.getCookies();
@@ -157,39 +171,64 @@ public class CookieHandler extends HttpServlet {
         return getResponseJson(last, previousIdps, true, true);
     }
 
-    private String getResponseJson(String last, Map<String, String> previousIdps, boolean setLast, boolean setPrev) {
-        StringBuilder b = new StringBuilder();
-        b.append(LF);
-        b.append(" {");
+    private JSONObject getResponseJson(String last, Map<String, String> previousIdps, boolean setLast, boolean setPrev) {
+        JSONObject json = new JSONObject();
         if (setLast) {
-            b.append(LF).append("  \"lastIdP\": \"").append(last).append("\"");
-            if (setPrev) {
-                b.append(",");
+            try {
+                json.accumulate("lastIdP", last);
+            } catch (JSONException ex) {
+                LOG.log(Level.INFO, null, ex);
             }
-            b.append(LF);
         }
         if (setPrev) {
-            b.append("  \"previousIdPs\": [");
-            boolean empty = true;
             for (int i = 0; i < 10; i++) {
                 if (previousIdps.containsKey(getId(i))) {
-                    b.append(LF);
-                    b.append("      {\"entityId\": \"").append(previousIdps.get(getId(i))).append("\"},");
-                    empty = false;
+                    try {
+                        JSONObject prevObj = new JSONObject();
+                        prevObj.accumulate("entityID", previousIdps.get(getId(i)));
+                        json.accumulate("previousIdPs", prevObj);
+                    } catch (JSONException ex) {
+                        LOG.log(Level.INFO, null, ex);
+                    }
                 }
             }
-            if (!empty) {
-                b.deleteCharAt(b.lastIndexOf(","));
-                b.append(LF).append("  ");
-            }
-            b.append("]").append(LF);
         }
-        b.append(" }").append(LF);
-        return b.toString();
 
+        return json;
     }
 
-    private String getCookieSettingResponse(HttpServletResponse response, String last, List<String> prevEntityIDs, int maxAge) {
+//    private String getResponseJsonOld(String last, Map<String, String> previousIdps, boolean setLast, boolean setPrev) {
+//        StringBuilder b = new StringBuilder();
+//        b.append(LF);
+//        b.append(" {");
+//        if (setLast) {
+//            b.append(LF).append("  \"lastIdP\": \"").append(last).append("\"");
+//            if (setPrev) {
+//                b.append(",");
+//            }
+//            b.append(LF);
+//        }
+//        if (setPrev) {
+//            b.append("  \"previousIdPs\": [");
+//            boolean empty = true;
+//            for (int i = 0; i < 10; i++) {
+//                if (previousIdps.containsKey(getId(i))) {
+//                    b.append(LF);
+//                    b.append("      {\"entityId\": \"").append(previousIdps.get(getId(i))).append("\"},");
+//                    empty = false;
+//                }
+//            }
+//            if (!empty) {
+//                b.deleteCharAt(b.lastIndexOf(","));
+//                b.append(LF).append("  ");
+//            }
+//            b.append("]").append(LF);
+//        }
+//        b.append(" }").append(LF);
+//        return b.toString();
+//
+//    }
+    private JSONObject getCookieSettingResponse(HttpServletResponse response, String last, List<String> prevEntityIDs, int maxAge) {
         Map<String, String> previousIdps = new HashMap<String, String>();
         boolean setLast = (last != null);
         boolean setPrevious = (prevEntityIDs.size() > 0);
@@ -225,6 +264,41 @@ public class CookieHandler extends HttpServlet {
         return getResponseJson(last, previousIdps, setLast, setPrevious);
     }
 
+//    private String getCookieSettingResponseOld(HttpServletResponse response, String last, List<String> prevEntityIDs, int maxAge) {
+//        Map<String, String> previousIdps = new HashMap<String, String>();
+//        boolean setLast = (last != null);
+//        boolean setPrevious = (prevEntityIDs.size() > 0);
+//        last = (setLast) ? last : "";
+//        StringBuilder b = new StringBuilder();
+//
+//        if (setLast) {
+//            Cookie cookie = new Cookie("lastIdp", last);
+//            cookie.setMaxAge(maxAge);
+//            response.addCookie(cookie);
+//        }
+//
+//        if (setPrevious) {
+//            Cookie prevCookie = new Cookie("previousIdPs", "");
+//            prevCookie.setMaxAge(maxAge);
+//            for (int i = 0; i < prevEntityIDs.size(); i++) {
+//                previousIdps.put(getId(i), prevEntityIDs.get(i));
+//                b.append(getId(i)).append("=").append(prevEntityIDs.get(i));
+//                if ((i + 1) < prevEntityIDs.size()) {
+//                    b.append(";");
+//                }
+//            }
+//            try {
+//                String encode = URLEncoder.encode(b.toString(), "UTF-8");
+//                prevCookie.setValue(encode);
+//                response.addCookie(prevCookie);
+//
+//            } catch (UnsupportedEncodingException ex) {
+//                previousIdps = new HashMap<String, String>();
+//            }
+//        }
+//
+//        return getResponseJson(last, previousIdps, setLast, setPrevious);
+//    }
     private void getCookieValues(String cookieValue, Map<String, String> previousIdps) {
         String[] values = cookieValue.split(";");
         for (String value : values) {
