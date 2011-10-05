@@ -64,7 +64,7 @@ public class CookieHandler extends HttpServlet {
         }
 
         // If no entity ID parameters - return current cookie values
-        response.setContentType("text/javascript");
+        response.setContentType("application/javascript");
         if (entityIDs.isEmpty() && last == null) {
             String cookieResponse = getResponseFromCookie(request);
             String jsonp = callback + "(" + cookieResponse + ")";

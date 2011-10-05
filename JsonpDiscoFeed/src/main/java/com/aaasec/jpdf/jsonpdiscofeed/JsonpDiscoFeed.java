@@ -54,7 +54,7 @@ public class JsonpDiscoFeed extends HttpServlet {
             return;
         }
 
-        response.setContentType("text/javascript");
+        response.setContentType("application/javascript");
         String json = getMetadataJson();
         String sourceUrl = request.getParameter("source");
         if (sourceUrl != null) {

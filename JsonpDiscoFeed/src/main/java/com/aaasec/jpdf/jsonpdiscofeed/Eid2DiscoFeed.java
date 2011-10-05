@@ -58,7 +58,7 @@ public class Eid2DiscoFeed extends HttpServlet {
         }
 
         if (action.equals("discoFeed")) {
-            response.setContentType("text/javascript");
+            response.setContentType("application/javascript");
             String json = getMetadataJson();
             String sourceUrl = request.getParameter("source");
             if (sourceUrl != null) {
@@ -70,7 +70,7 @@ public class Eid2DiscoFeed extends HttpServlet {
         }
 
         if (action.equals("setCookie")) {
-            response.setContentType("text/javascript");
+            response.setContentType("application/javascript");
             String value = request.getParameter("entityID");
             String callback = request.getParameter("callback");
             String maxAgeStr = request.getParameter("maxAge");
