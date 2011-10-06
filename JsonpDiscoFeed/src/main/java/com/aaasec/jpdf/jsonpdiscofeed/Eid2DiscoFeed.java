@@ -89,7 +89,9 @@ public class Eid2DiscoFeed extends HttpServlet {
             } catch (Exception ex) {
                 maxAge = -1;
             }
-            Cookie cookie = new Cookie("lastIdp", value);
+            Cookie cookie = getCookie(request.getCookies(), "lastIdp", response);
+            cookie.setValue(value);
+            cookie.setPath("/");
             cookie.setMaxAge(maxAge);
             response.addCookie(cookie);
             String jsonp = callback + "({\"entityID\": \"" + value + "\"})";
@@ -195,5 +197,22 @@ public class Eid2DiscoFeed extends HttpServlet {
             metaData = new MetaData(new File(metaCacheFileName));
         }
         return metaData.getDiscoJson();
+    }
+
+    private Cookie getCookie(Cookie[] cookies, String name, HttpServletResponse response) {
+        Cookie cookie = new Cookie(name, "");
+        boolean found = false;
+        for (Cookie ck : cookies) {
+            if (ck.getName().equals(name)) {
+                if (found) {
+                    ck.setMaxAge(0);
+                    response.addCookie(ck);
+                } else {
+                    cookie = ck;
+                    found = true;
+                }
+            }
+        }
+        return cookie;
     }
 }

@@ -22,6 +22,11 @@
             <version>20090211</version>
         </dependency>
         <dependency>
+            <groupId>biz.source_code</groupId>
+            <artifactId>base64coder</artifactId>
+            <version>2010-12-19</version>
+        </dependency>
+        <dependency>
             <groupId>javax</groupId>
             <artifactId>javaee-web-api</artifactId>
             <version>6.0</version>

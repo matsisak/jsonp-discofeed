@@ -1,5 +1,6 @@
 package com.aaasec.jpdf.jsonpdiscofeed;
 
+import biz.source_code.base64Coder.Base64Coder;
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -80,6 +81,7 @@ public class CookieHandler extends HttpServlet {
             return;
         }
 
+        // Else, set cookie
         int maxAge;
         try {
             maxAge = Integer.decode(maxAgeStr) * (60 * 60 * 24);
@@ -88,7 +90,7 @@ public class CookieHandler extends HttpServlet {
         }
         String cookieResponse;
         try {
-            cookieResponse = getCookieSettingResponse(response, last, entityIDs, maxAge).toString(2);
+            cookieResponse = setCookie(request.getCookies(), response, last, entityIDs, maxAge).toString(2);
         } catch (JSONException ex) {
             LOG.log(Level.INFO, null, ex);
             cookieResponse = "";
@@ -133,20 +135,6 @@ public class CookieHandler extends HttpServlet {
         return "Short description";
     }// </editor-fold>
 
-    private String getDiscoFeed(String sourceUrl) {
-        URL url;
-        String json = "[]";
-        try {
-            url = new URL(sourceUrl);
-            byte[] jsonBytes = Utils.getUrlBytes(url);
-            if (jsonBytes != null) {
-                json = new String(jsonBytes, Charset.forName("UTF-8"));
-            }
-        } catch (Exception ex) {
-        }
-        return json;
-    }
-
     private JSONObject getResponseFromCookie(HttpServletRequest request) {
         Map<String, String> previousIdps = new HashMap<String, String>();
         String last = "";
@@ -156,10 +144,9 @@ public class CookieHandler extends HttpServlet {
                 String name = cookie.getName();
                 if (name.equals("previousIdPs")) {
                     try {
-                        String decoded = URLDecoder.decode(cookie.getValue(), "UTF-8");
+                        String decoded = Base64Coder.decodeString(cookie.getValue());
                         getCookieValues(decoded, previousIdps);
-                    } catch (UnsupportedEncodingException ex) {
-                        Logger.getLogger(CookieHandler.class.getName()).log(Level.SEVERE, null, ex);
+                    } catch (Exception ex) {
                         getCookieValues("", previousIdps);
                     }
                 }
@@ -197,38 +184,7 @@ public class CookieHandler extends HttpServlet {
         return json;
     }
 
-//    private String getResponseJsonOld(String last, Map<String, String> previousIdps, boolean setLast, boolean setPrev) {
-//        StringBuilder b = new StringBuilder();
-//        b.append(LF);
-//        b.append(" {");
-//        if (setLast) {
-//            b.append(LF).append("  \"lastIdP\": \"").append(last).append("\"");
-//            if (setPrev) {
-//                b.append(",");
-//            }
-//            b.append(LF);
-//        }
-//        if (setPrev) {
-//            b.append("  \"previousIdPs\": [");
-//            boolean empty = true;
-//            for (int i = 0; i < 10; i++) {
-//                if (previousIdps.containsKey(getId(i))) {
-//                    b.append(LF);
-//                    b.append("      {\"entityId\": \"").append(previousIdps.get(getId(i))).append("\"},");
-//                    empty = false;
-//                }
-//            }
-//            if (!empty) {
-//                b.deleteCharAt(b.lastIndexOf(","));
-//                b.append(LF).append("  ");
-//            }
-//            b.append("]").append(LF);
-//        }
-//        b.append(" }").append(LF);
-//        return b.toString();
-//
-//    }
-    private JSONObject getCookieSettingResponse(HttpServletResponse response, String last, List<String> prevEntityIDs, int maxAge) {
+    private JSONObject setCookie(Cookie[] cookies, HttpServletResponse response, String last, List<String> prevEntityIDs, int maxAge) {
         Map<String, String> previousIdps = new HashMap<String, String>();
         boolean setLast = (last != null);
         boolean setPrevious = (prevEntityIDs.size() > 0);
@@ -236,14 +192,17 @@ public class CookieHandler extends HttpServlet {
         StringBuilder b = new StringBuilder();
 
         if (setLast) {
-            Cookie cookie = new Cookie("lastIdp", last);
-            cookie.setMaxAge(maxAge);
-            response.addCookie(cookie);
+            Cookie lastCookie = getCookie(cookies, "lastIdp", response);
+            lastCookie.setMaxAge(maxAge);
+            lastCookie.setPath("/");
+            lastCookie.setValue(last);
+            response.addCookie(lastCookie);
         }
 
         if (setPrevious) {
-            Cookie prevCookie = new Cookie("previousIdPs", "");
+            Cookie prevCookie = getCookie(cookies, "previousIdPs", response);
             prevCookie.setMaxAge(maxAge);
+            prevCookie.setPath("/");
             for (int i = 0; i < prevEntityIDs.size(); i++) {
                 previousIdps.put(getId(i), prevEntityIDs.get(i));
                 b.append(getId(i)).append("=").append(prevEntityIDs.get(i));
@@ -251,54 +210,14 @@ public class CookieHandler extends HttpServlet {
                     b.append(";");
                 }
             }
-            try {
-                String encode = URLEncoder.encode(b.toString(), "UTF-8");
-                prevCookie.setValue(encode);
-                response.addCookie(prevCookie);
-
-            } catch (UnsupportedEncodingException ex) {
-                previousIdps = new HashMap<String, String>();
-            }
+            String encode = Base64Coder.encodeString(b.toString());
+            prevCookie.setValue(encode);
+            response.addCookie(prevCookie);
         }
 
         return getResponseJson(last, previousIdps, setLast, setPrevious);
     }
 
-//    private String getCookieSettingResponseOld(HttpServletResponse response, String last, List<String> prevEntityIDs, int maxAge) {
-//        Map<String, String> previousIdps = new HashMap<String, String>();
-//        boolean setLast = (last != null);
-//        boolean setPrevious = (prevEntityIDs.size() > 0);
-//        last = (setLast) ? last : "";
-//        StringBuilder b = new StringBuilder();
-//
-//        if (setLast) {
-//            Cookie cookie = new Cookie("lastIdp", last);
-//            cookie.setMaxAge(maxAge);
-//            response.addCookie(cookie);
-//        }
-//
-//        if (setPrevious) {
-//            Cookie prevCookie = new Cookie("previousIdPs", "");
-//            prevCookie.setMaxAge(maxAge);
-//            for (int i = 0; i < prevEntityIDs.size(); i++) {
-//                previousIdps.put(getId(i), prevEntityIDs.get(i));
-//                b.append(getId(i)).append("=").append(prevEntityIDs.get(i));
-//                if ((i + 1) < prevEntityIDs.size()) {
-//                    b.append(";");
-//                }
-//            }
-//            try {
-//                String encode = URLEncoder.encode(b.toString(), "UTF-8");
-//                prevCookie.setValue(encode);
-//                response.addCookie(prevCookie);
-//
-//            } catch (UnsupportedEncodingException ex) {
-//                previousIdps = new HashMap<String, String>();
-//            }
-//        }
-//
-//        return getResponseJson(last, previousIdps, setLast, setPrevious);
-//    }
     private void getCookieValues(String cookieValue, Map<String, String> previousIdps) {
         String[] values = cookieValue.split(";");
         for (String value : values) {
@@ -311,5 +230,22 @@ public class CookieHandler extends HttpServlet {
 
     private String getId(int i) {
         return "p" + String.valueOf(i);
+    }
+
+    private Cookie getCookie(Cookie[] cookies, String name, HttpServletResponse response) {
+        Cookie cookie = new Cookie(name, "");
+        boolean found = false;
+        for (Cookie ck : cookies) {
+            if (ck.getName().equals(name)) {
+                if (found) {
+                    ck.setMaxAge(0);
+                    response.addCookie(cookie);
+                } else {
+                    cookie = ck;
+                    found = true;
+                }
+            }
+        }
+        return cookie;
     }
 }
