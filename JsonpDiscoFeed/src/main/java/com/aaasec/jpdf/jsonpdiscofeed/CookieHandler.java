@@ -1,13 +1,7 @@
 package com.aaasec.jpdf.jsonpdiscofeed;
 
 import biz.source_code.base64Coder.Base64Coder;
-import java.io.File;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.URL;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
