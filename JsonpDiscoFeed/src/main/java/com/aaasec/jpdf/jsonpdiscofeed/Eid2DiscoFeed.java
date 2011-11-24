@@ -202,14 +202,16 @@ public class Eid2DiscoFeed extends HttpServlet {
     private Cookie getCookie(Cookie[] cookies, String name, HttpServletResponse response) {
         Cookie cookie = new Cookie(name, "");
         boolean found = false;
-        for (Cookie ck : cookies) {
-            if (ck.getName().equals(name)) {
-                if (found) {
-                    ck.setMaxAge(0);
-                    response.addCookie(ck);
-                } else {
-                    cookie = ck;
-                    found = true;
+        if (cookies != null) {
+            for (Cookie ck : cookies) {
+                if (ck.getName().equals(name)) {
+                    if (found) {
+                        ck.setMaxAge(0);
+                        response.addCookie(ck);
+                    } else {
+                        cookie = ck;
+                        found = true;
+                    }
                 }
             }
         }
