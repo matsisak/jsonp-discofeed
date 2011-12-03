@@ -65,7 +65,8 @@ public class JsonpDiscoFeed extends HttpServlet {
         String jsonStr="[]";
         try {
             jsonStr = json.toString(2);
-        } catch (JSONException ex) {
+        } catch (Exception ex) {
+            LOG.warning(ex.getMessage());
         }
         String jsonp = callback + "(" + jsonStr + ")";
         response.getWriter().write(jsonp);
@@ -119,6 +120,7 @@ public class JsonpDiscoFeed extends HttpServlet {
                 json = new JSONArray(jsonstr);
             }
         } catch (Exception ex) {
+            LOG.warning(ex.getMessage());
         }
         return json;
     }
